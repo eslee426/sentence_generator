@@ -1,0 +1,188 @@
+Name: Elisha Lee
+uni: esl2131
+Assignment 1: Sentence Generator in Lisp
+
+
+Part 1: Build a more sophisticated grammar
+sentence -> 
+(nounPhrase verbPhrase) 
+- This allows a sentence to consist of a nounphrase and a verbphrase - and ensures that a singular nounphrase is matched with a singular verbphrase. It also ensures that a nounphrase will match consistently have a present tense verbphrase
+	Example: The dog runs
+
+(nounPhrase-Plural verbPhrase-Plural)
+- Similarly as above, this ensures that a plural nounphrase matches a plural verb phrase
+	Example: The dogs run
+
+(nounPhrase verbPhrase-Past)
+- This rule ensures that that the tense of the verbphrase will consistently stay in the past tense
+	Example: The dogs ran 
+			 The dog ran
+
+(sentence CoordinatingConjunction sentence)
+- this allows you to combine sentences using a coordinating conjunction
+	Example: I like cats and she likes dogs
+
+(SubordinatingConjunction sentence verbPhrase)m
+- This allows you to start a sentence with a subordinating conjunction
+	Example: (test corpus sentence) Whether the prosecution will seek the death penalty in the case will be decided in a few weeks
+
+
+nounPhrase ->
+(adjectivePhrase AbstractNoun)
+- Sometimes abstract nouns do not need to start with an article
+	Example: Higher education
+
+(Article adjectivePhrase Noun)
+- Most singular nouns require an article, and this also deals with adjectives describing the article
+	Example: The blue dog runs
+
+(AbstractNoun)
+- Some nounphrases are just an abstract noun  (without the artcle, like above)
+	Example: Education is important
+
+(Article Noun)
+- (given)
+
+(PreAdjective adjectivePhrase Noun)
+- for words that specify an adjective even more
+	Example: This blue dog is strange
+
+(nounPhrase prepositionalPhrase)
+- Handles prepositional phrases that describe a noun phrase
+	Example: The dog, inside the house, is cute.
+
+(Article NounAdjective Noun)/(NounAdjective Noun) 
+- Handles nouns that are made up of 2 nouns
+	Example: Health care is needed.
+
+(nounPhrase-Plural -> 
+(adjectivePhrase Noun-Plural)/Article adjectivePhrase NounPlural
+(Noun-Plural)
+- Plural nouns do not require an article
+	Example: Blue dogs are not common
+
+(nounPhrase-Plural relativeClause)
+- noun phrases are followed by relative clauses that describe the nounphrase
+	Example: The children who skateboard in the street are noisy
+
+(nounPhrase-Plural CoordinatingConjunction nounPhrase)
+- To handle multiple nouns
+	Example: The dogs and cats are loud.
+
+
+(nounPhrase-Plural prepositionalPhrase)
+(adjectivePhrase NounAdjective Noun-Plural)
+- These are just repeating examples above but used to handle plural nouns
+	Example: the dogs, in the house, are loud
+			 Solid job gains... (from corpus)
+
+(adjectivePhrase -> 
+(Adjective) 
+(Adjective adjectivePhrase) // for multple adjectives
+(adjectivePhrase CoordinatingConjunction adjectivePhrase) // for multiple adjectives
+- These handle the different types of adjective phrases 
+	Ex: The blue dog...
+		The shiny red truck...
+		The shiny and red truck...
+
+
+(prepositionalPhrase -> 
+(Preposition nounPhrase) // handles general prepositions: Example: In the house
+(Preposition nounPhrase-Plural) // same as above but for plural noun phrases Example: Under the cars
+(Prep-Modifier Preposition nounPhrase-Plural) // handles "such as" from corpus 
+
+(verbPhrase -> // handles both singular and present verb phrases
+(verbPhrase prepositionalPhrase) // handles prepositional phrases that follow a verb phrase - Example: the dogs ran under the car
+(verbClauseTransitive nounPhrase) // nounphrases can follow a transitive verb phrase = Example: The dog loved the food
+(verbClauseIntransitive) // for intransitive verbs = Example: The dog ate
+(beVerbClause) // handles be verb = The dog should be able to run
+(verbPhrase-Future)/verbPhrase-Future nounPhrase // handles future tense verbs = Sally will win the medal
+
+(verbPhrase-Past -> // handles past tense verbs
+(verbPhrase-Past prepositionalPhrase)
+(verbClauseTransitive-Past nounPhrase)
+(verbclauseIntransitive-Past) // all aboved cases but for past tense verbs
+(v)
+
+(verbPhrase-Plural ->  // handles verb phrases for plural noun phrases
+(verbPhrase-Plural prepositionalPhrase)
+(verbClauseTransitive-Plural nounPhrase-Plural)
+
+(verbClauseTransitive -> // created this for different verb phrases
+(VerbTrans) //  for transitive verbs by itslef
+(HelpingVerb VerbTrans-Plural) // for verbs that occur after a helping verb - Example: will succeed
+(HelpingVerb Adverb VerbTrans) // verbs that have a helping verb, adverb, verb - Example: will happily succeed
+
+(verbClauseTransitive-Plural -> // deals with verb phrases dealing with plural verbs - handles plural cases for all the above mentioned
+(VerbTrans-Plural) 
+(HelpingVerb VerbTrans-Plural)
+(HelpingVerb Adverb VerbTrans-Plural)
+
+(verbClauseIntransitive ->  // handles all intransitive verb cases - along with the ones mentioned above
+(VerbIntrans)
+(HelpingVerb VerbIntrans)
+(HelpingVerb VerbIntrans))
+
+(beVerbClause -> // handles be verbs - in all above cases
+(HelpingVerb Adverb BeVerb Adjective)
+(HelpingVerb BeVerb Adjective infinitivePhrase)
+
+(verbPhrase-Future -> // handles future tense verbs - in all above cases
+(HelpingVerb BeVerb Verb-Past)
+(HelpingVerb Adverb VerbTrans-Plural)
+
+(infinitivePhrase -> // handles infinitive phrases
+(Infinitive VerbTrans Object)
+(Infinitive VerbTrans Adjective)
+
+(expletivePhrase -> // Handles expletives in the beginning of sentence 
+ExpletivePronoun ExpletiveVerb) // Example: There are
+
+(relativeClause -> // handles relative clauses
+(RelativePronoun VerbTrans-Past infinitivePhrase)
+
+
+
+Part 2: Generating Specified Sentences
+
+(defparameter rules1 '((sentence 0) (nounPhrase 0) (adjectivePhrase 0) (Adjective 0) (AbstractNoun 0) 
+                       (verbPhrase 0) (verbPhrase 1) (verbClauseTransitive 1) (HelpingVerb 0) (VerbTrans-Plural 0) (nounPhrase 1) (Article 0) (adjectivePhrase 0) (Adjective 1) (Noun 0) (prepositionalPhrase 0) (Preposition 0) (nounPhrase 2) (AbstractNoun 1)))
+
+Produces: (HIGHER EDUCATION MUST COUNTER THE PREVAILING NARRATIVE OF POLARIZATION)
+
+
+(defparameter rules2 '((sentence 0) (nounPhrase 4) (PreAdjective 0) (adjectivePhrase 0) (Adjective 2) (Noun 1) 
+                       (verbPhrase 5) (verbPhrase-Future 1) (HelpingVerb 1) (Adverb 0) (VerbTrans-Plural 1) (nounPhrase 1) (Article 0) (adjectivePhrase 0) (Adjective 3) (Noun 2)))
+
+Produces: (THIS FLAWED STRATEGY WILL HARDLY ACHIEVE THE DESIRED INTENT)
+
+
+(defparameter rules3 '((sentence 5) (expletivePhrase 0) (ExpletivePronoun 0) (ExpletiveVerb 0) (nounPhrase-Plural 2) (nounPhrase-Plural 4) (nounPhrase-Plural 2) (nounPhrase-Plural 3) (adjectivePhrase 0) (Adjective 9) (NounAdjective 1) (NounPlural 3)
+                       (prepositionalPhrase 1) (Preposition 2) (nounPhrase-Plural 0) (adjectivePhrase 0) (Adjective 10) (NounPlural 4) (relativeClause 0) (RelativePronoun 0) (VerbTrans-Past 0) (infinitivePhrase 1) (Infinitive 0) (VerbTrans 3) (Adjective 11)
+                       (prepositionalPhrase 2) (Prep-Modifier 0) (Preposition 5) (nounPhrase-Plural 5) (nounPhrase-Plural 0) (adjectivePhrase 2) (adjectivePhrase 0) (Adjective 12) (CoordinatingConjunction 0) (adjectivePhrase 0) (Adjective 13) (NounPlural 5)
+                       (CoordinatingConjunction 0) (nounPhrase 7) (NounAdjective 2) (Noun 9)))
+
+Produces: (THERE WERE SOLID JOB GAINS IN SEVERAL INDUSTRIES THAT TEND TO PAY WELL SUCH AS BUSINESS AND PROFESSIONAL SERVICES AND HEALTH CARE)
+
+(defparameter rules4 '((sentence 3) (sentence 0) (nounPhrase 3) (Article 0) (Noun 3) 
+                       (verbPhrase 0) (verbPhrase 3) (beVerbClause 0) (HelpingVerb 1) (Adverb 1) (BeVerb 0) (Adjective 5) (prepositionalPhrase 0) (Preposition 3) (nounPhrase 1) (Article 0) (adjectivePhrase 0) (Adjective 4) (Noun 4)
+                       (CoordinatingConjunction 2) (sentence 1) (nounPhrase-Plural 0) (adjectivePhrase 0) (Adjective 6) (NounPlural 0)  
+                       (verbPhrase-Plural 0) (verbPhrase-Plural 3) (beVerbClause 1) (HelpingVerb 2) (BeVerb 0) (Adjective 7) (infinitivePhrase 0) (Infinitive 0) (VerbTrans-Plural 5) (Object 0) (prepositionalPhrase 1) (Preposition 4) (nounPhrase-Plural 1) (NounPlural 1)))
+
+
+Produces: (THE ASTEROID WILL NOT BE VISIBLE TO THE NAKED EYE BUT AMATEUR ASTRONOMERS SHOULD BE ABLE TO SEE IT WITH TELESCOPES)
+
+(defparameter rules5 '((sentence 4) (SubordinatingConjunction 0) (sentence 0) (nounPhrase 3) (Article 0) (Noun 8) 
+                       (verbPhrase 1) (verbClauseTransitive 1) (HelpingVerb 1) (VerbTrans-Plural 2) (nounPhrase 5) (nounPhrase 6) (Article 0) (NounAdjective 0) (Noun 7) (prepositionalPhrase 0) (Preposition 2) (nounPhrase 3) (Article 0) (Noun 6)
+                       (verbPhrase 0) (verbPhrase 4) (verbPhrase-Future 0) (HelpingVerb 1) (BeVerb 0) (Verb-Past 0) (prepositionalPhrase 1) (Preposition 2) (nounPhrase-Plural 6) (Article 1) (adjectivePhrase 0) (Adjective 8) (NounPlural 2))) 
+
+
+Produces: (WHETHER THE PROSECUTION WILL SEEK THE DEATH PENALTY IN THE CASE WILL BE DECIDED IN A FEW WEEKS)
+
+
+
+Part 3: Rejecting Sentences
+Two additional rules:
+- Ensures that I do not have too many articles or conjunctions in a sentence 
+- Ensures that a sentence does not have two consecutive subordinating conjunctions
+- Could not get tree depth to work - so left it out
